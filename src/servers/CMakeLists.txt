@@ -406,14 +406,10 @@ if(${TRITON_ENABLE_TENSORRT})
   )
 endif() # TRITON_ENABLE_TENSORRT
 
-if(${TRITON_ENABLE_CAFFE2} OR ${TRITON_ENABLE_PYTORCH})
+if(${TRITON_ENABLE_CAFFE2})
   target_link_libraries(
     tritonserver
     PUBLIC ${TRITON_EXTRA_LDFLAGS}
-    PUBLIC -ltorch
-    PUBLIC -ltorch_cpu
-    PUBLIC -ltorch_cuda
-    PUBLIC -ltorchvision
     PUBLIC -lcaffe2_detectron_ops_gpu
     PUBLIC -lcaffe2_nvrtc
     PUBLIC -lc10
@@ -426,7 +422,7 @@ if(${TRITON_ENABLE_CAFFE2} OR ${TRITON_ENABLE_PYTORCH})
     PUBLIC -lmkl_rt
     PUBLIC -lmkl_vml_def
   )
-endif() # TRITON_ENABLE_CAFFE2 || TRITON_ENABLE_PYTORCH
+endif() # TRITON_ENABLE_CAFFE2
 
 if(${TRITON_ENABLE_METRICS})
   find_package(prometheus-cpp CONFIG REQUIRED)
