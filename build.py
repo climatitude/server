@@ -41,9 +41,9 @@ from distutils.dir_util import copy_tree
 # Build Triton Inference Server.
 #
 EXAMPLE_BACKENDS = ['identity', 'square', 'repeat']
-CORE_BACKENDS = ['pytorch', 'tensorrt', 'custom', 'ensemble', 'caffe2']
+CORE_BACKENDS = ['tensorrt', 'custom', 'ensemble', 'caffe2']
 NONCORE_BACKENDS = [
-    'tensorflow1', 'tensorflow2', 'onnxruntime', 'python', 'dali'
+    'tensorflow1', 'tensorflow2', 'onnxruntime', 'python', 'dali', 'pytorch'
 ]
 FLAGS = None
 
@@ -187,13 +187,11 @@ def core_cmake_args(components, backends, install_dir):
                      ('tensorflow2' in backends))))
 
     for be in (CORE_BACKENDS + NONCORE_BACKENDS):
-        if not be.startswith('tensorflow'):
+        if not (be.startswith('tensorflow') or be == 'dali'):
             cargs.append('-DTRITON_ENABLE_{}={}'.format(
                 be.upper(), cmake_enable(be in backends)))
         if (be in CORE_BACKENDS) and (be in backends):
-            if be == 'pytorch':
-                cargs += pytorch_cmake_args()
-            elif be == 'tensorrt':
+            if be == 'tensorrt':
                 pass
             elif be == 'custom':
                 pass
@@ -205,7 +203,7 @@ def core_cmake_args(components, backends, install_dir):
                 fail('unknown core backend {}'.format(be))
 
     cargs.append(
-        '-DTRITON_EXTRA_LIB_PATHS=/opt/tritonserver/lib;/opt/tritonserver/lib/pytorch;/opt/tritonserver/backends/pytorch'
+        '-DTRITON_EXTRA_LIB_PATHS=/opt/tritonserver/lib;/opt/tritonserver/lib/caffe2'
     )
     cargs.append('/workspace/build')
     return cargs
@@ -228,6 +226,8 @@ def backend_cmake_args(images, components, be, install_dir):
         args = []
     elif be == 'dali':
         args = dali_cmake_args()
+    elif be == 'pytorch':
+        args = pytorch_cmake_args()
     elif be in EXAMPLE_BACKENDS:
         args = []
     else:
@@ -458,20 +458,20 @@ RUN rm -fr /opt/*
 # Caffe2 libraries
 COPY --from=tritonserver_pytorch \
      /opt/conda/lib/python3.6/site-packages/torch/lib/libcaffe2_detectron_ops_gpu.so \
-     /opt/tritonserver/lib/pytorch/
+     /opt/tritonserver/lib/caffe2/
 COPY --from=tritonserver_pytorch \
      /opt/conda/lib/python3.6/site-packages/torch/lib/libc10.so \
-     /opt/tritonserver/lib/pytorch/
+     /opt/tritonserver/lib/caffe2/
 COPY --from=tritonserver_pytorch \
      /opt/conda/lib/python3.6/site-packages/torch/lib/libc10_cuda.so \
-     /opt/tritonserver/lib/pytorch/
-COPY --from=tritonserver_pytorch /opt/conda/lib/libmkl_avx2.so /opt/tritonserver/lib/pytorch/
-COPY --from=tritonserver_pytorch /opt/conda/lib/libmkl_core.so /opt/tritonserver/lib/pytorch/
-COPY --from=tritonserver_pytorch /opt/conda/lib/libmkl_def.so /opt/tritonserver/lib/pytorch/
-COPY --from=tritonserver_pytorch /opt/conda/lib/libmkl_gnu_thread.so /opt/tritonserver/lib/pytorch/
-COPY --from=tritonserver_pytorch /opt/conda/lib/libmkl_intel_lp64.so /opt/tritonserver/lib/pytorch/
-COPY --from=tritonserver_pytorch /opt/conda/lib/libmkl_rt.so /opt/tritonserver/lib/pytorch/
-COPY --from=tritonserver_pytorch /opt/conda/lib/libmkl_vml_def.so /opt/tritonserver/lib/pytorch/
+     /opt/tritonserver/lib/caffe2/
+COPY --from=tritonserver_pytorch /opt/conda/lib/libmkl_avx2.so /opt/tritonserver/lib/caffe2/
+COPY --from=tritonserver_pytorch /opt/conda/lib/libmkl_core.so /opt/tritonserver/lib/caffe2/
+COPY --from=tritonserver_pytorch /opt/conda/lib/libmkl_def.so /opt/tritonserver/lib/caffe2/
+COPY --from=tritonserver_pytorch /opt/conda/lib/libmkl_gnu_thread.so /opt/tritonserver/lib/caffe2/
+COPY --from=tritonserver_pytorch /opt/conda/lib/libmkl_intel_lp64.so /opt/tritonserver/lib/caffe2/
+COPY --from=tritonserver_pytorch /opt/conda/lib/libmkl_rt.so /opt/tritonserver/lib/caffe2/
+COPY --from=tritonserver_pytorch /opt/conda/lib/libmkl_vml_def.so /opt/tritonserver/lib/caffe2/
 
 # LibTorch and Torchvision headers and libraries
 COPY --from=tritonserver_pytorch /opt/conda/lib/python3.6/site-packages/torch/include \
@@ -665,8 +665,9 @@ COPY --chown=1000:1000 LICENSE .
 COPY --chown=1000:1000 VERSION .
 COPY --chown=1000:1000 --from=tritonserver_build /tmp/tritonbuild/install/bin/tritonserver bin/
 COPY --chown=1000:1000 --from=tritonserver_build /tmp/tritonbuild/install/lib/libtritonserver.so lib/
-COPY --chown=1000:1000 --from=tritonserver_build /opt/tritonserver/lib/pytorch lib/pytorch
+COPY --chown=1000:1000 --from=tritonserver_build /opt/tritonserver/lib/caffe2 lib/caffe2
 COPY --chown=1000:1000 --from=tritonserver_build /opt/tritonserver/backends/onnxruntime/* backends/onnxruntime/
+COPY --chown=1000:1000 --from=tritonserver_build /opt/tritonserver/backends/pytorch/* backends/pytorch/
 '''.format(argmap['TRITON_VERSION'], argmap['TRITON_CONTAINER_VERSION'],
            argmap['BASE_IMAGE'])
 
