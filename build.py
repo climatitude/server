@@ -472,6 +472,8 @@ COPY --from=tritonserver_pytorch /opt/conda/lib/libmkl_gnu_thread.so /opt/triton
 COPY --from=tritonserver_pytorch /opt/conda/lib/libmkl_intel_lp64.so /opt/tritonserver/lib/caffe2/
 COPY --from=tritonserver_pytorch /opt/conda/lib/libmkl_rt.so /opt/tritonserver/lib/caffe2/
 COPY --from=tritonserver_pytorch /opt/conda/lib/libmkl_vml_def.so /opt/tritonserver/lib/caffe2/
+COPY --from=tritonserver_pytorch /opt/conda/lib/python3.6/site-packages/torch/lib/libcaffe2_nvrtc.so \
+     /opt/tritonserver/lib/caffe2/
 
 # LibTorch and Torchvision headers and libraries
 COPY --from=tritonserver_pytorch /opt/conda/lib/python3.6/site-packages/torch/include \
@@ -482,8 +484,6 @@ COPY --from=tritonserver_pytorch /opt/conda/lib/python3.6/site-packages/torch/li
       /opt/tritonserver/backends/pytorch/
 COPY --from=tritonserver_pytorch /opt/conda/lib/python3.6/site-packages/torch/lib/libtorch_cuda.so \
       /opt/tritonserver/backends/pytorch/
-COPY --from=tritonserver_pytorch /opt/conda/lib/python3.6/site-packages/torch/lib/libcaffe2_nvrtc.so \
-     /opt/tritonserver/backends/pytorch/
 COPY --from=tritonserver_pytorch /opt/pytorch/vision/torchvision/csrc \
     /opt/tritonserver/include/torchvision/torchvision/
 COPY --from=tritonserver_pytorch /opt/pytorch/vision/build/libtorchvision.so \
